@@ -30,8 +30,8 @@ offsets = {
     "data": 63
 }
 
-f = open("files.zip", "rb")
-lines = f.readlines()
+zip_file = open("files.zip", "rb")
+lines = zip_file.readlines()
 byte_list = []
 
 # parse passed in arguments
@@ -43,8 +43,6 @@ args = parser.parse_args()
 with open("files.zip", "rb") as f:
     while True:
         byte = f.read(1)
-        if byte == b'0x20':
-            continue
 
         if not byte:
             break
@@ -52,6 +50,7 @@ with open("files.zip", "rb") as f:
 
 # begin parsing
 count = 0
+found_files = list() # list of File objects
 for count in range(len(byte_list)):
     try: 
         # detect start of a new local file header
@@ -61,11 +60,12 @@ for count in range(len(byte_list)):
             if name[0] == b'\x18':
                 continue
             data = find_end_of_data(count + offsets["data"], byte_list)
-            print(name, data)
+            found_files.append(File(b''.join(name).decode('utf-8'), data))
+            #print(name, data)
             #print(byte_list[count+63:count+67])
 
         #print(count, byte_list[count].decode('utf-8'), byte_list[count])
-    except Exception as e: 
+    except Exception as e:
         pass # ignore any errors
     count += 1
 
@@ -74,5 +74,8 @@ if args.p:
     for i in range(len(byte_list)):
         print(i, byte_list[i])
 
+for f in found_files:
+    print(f.name, f.size)
+
 print("size of zip archive:", len(byte_list))
-f.close()
+zip_file.close()
